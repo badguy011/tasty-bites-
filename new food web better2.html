@@ -1,0 +1,904 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TastyBite — Full E‑Commerce Food Store</title>
+  <meta name="description" content="TastyBite: demo full-featured food store with cart, localStorage, checkout and animations." />
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ---------- RESET & BASE ---------- */
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;scroll-behavior:smooth}
+    body{font-family: 'Poppins', system-ui, sans-serif;background:#fff8f0;color:#222;line-height:1.4}
+    a{color:inherit;text-decoration:none}
+
+    /* ---------- CONTAINER ---------- */
+    .container{max-width:1200px;margin:0 auto;padding:0 1rem}
+
+    /* ---------- NAVBAR ---------- */
+    header{position:sticky;top:0;z-index:120;background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.9));backdrop-filter: blur(4px);box-shadow:0 6px 20px rgba(0,0,0,0.06)}
+    .nav{display:flex;align-items:center;justify-content:space-between;padding:.9rem 0}
+    .brand{display:flex;gap:.75rem;align-items:center}
+    .logo{width:44px;height:44px;border-radius:9px;background:linear-gradient(135deg,#ff6f00,#ffb347);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:18px;box-shadow:0 6px 18px rgba(255,111,0,0.18)}
+    .brand h1{font-size:1.125rem;color:#ff6f00}
+    nav.links{display:flex;gap:1rem;align-items:center}
+    nav.links a{padding:.45rem .6rem;border-radius:8px;transition:all .18s}
+    nav.links a:hover{background:rgba(255,111,0,0.08)}
+
+    /* search */
+    .searchbar{display:flex;align-items:center;gap:.5rem;background:#fff;padding:.35rem;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.04);min-width:260px}
+    .searchbar input{border:0;outline:0;padding:.5rem .6rem;background:transparent;font-size:.95rem}
+
+    /* cart icon */
+    .cart-btn{position:relative;background:#ff6f00;border:none;color:#fff;padding:.6rem .8rem;border-radius:12px;display:flex;align-items:center;gap:.6rem;cursor:pointer;transition:background .2s}
+    .cart-count{position:absolute;top:-8px;right:-8px;background:#111;color:#fff;padding:4px 6px;border-radius:999px;font-size:.75rem;font-weight:700}
+
+    /* ---------- HERO ---------- */
+    .hero{min-height:60vh;background-image:linear-gradient(135deg, rgba(255,111,0,0.12), rgba(255,204,0,0.12)), url('https://images.unsplash.com/photo-1543349683-0f0f9a0b6f8d?auto=format&fit=crop&w=1650&q=80');background-size:cover;background-position:center;display:flex;align-items:center}
+    .hero-inner{padding:5rem 0;display:flex;gap:2rem;align-items:center}
+    .hero-copy{flex:1}
+    .hero-copy h2{font-size:2rem;color:#ff6f00;margin-bottom:.4rem}
+    .hero-copy p{font-size:1.05rem;color:#333;margin-bottom:1rem}
+    .hero-cta{display:flex;gap:.6rem}
+    .btn{background:#ff6f00;color:#fff;padding:.65rem 1rem;border-radius:12px;border:0;cursor:pointer;font-weight:700;transition:all .2s}
+    .btn:hover{background:#e66000}
+    .btn.ghost{background:transparent;color:#ff6f00;border:2px solid rgba(255,111,0,0.12)}
+    .btn.ghost:hover{background:rgba(255,111,0,0.08)}
+    .btn.added{background:#28a745;color:#fff}
+
+    /* ---------- FILTER BAR ---------- */
+    .toolbar{display:flex;gap:1rem;align-items:center;justify-content:space-between;padding:1.2rem 0}
+    .filters{display:flex;gap:.6rem;align-items:center}
+    .select, .input{padding:.5rem .6rem;border-radius:10px;border:1px solid rgba(0,0,0,.06);background:#fff;min-width:120px}
+
+    /* ---------- PRODUCT GRID ---------- */
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem}
+    .card{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.06);transition:transform .28s, box-shadow .28s}
+    .card:hover{transform:translateY(-8px);box-shadow:0 18px 40px rgba(0,0,0,0.08)}
+    .card img{width:100%;height:170px;object-fit:cover;cursor:pointer}
+    .card-body{padding:1rem}
+    .card h3{color:#ff6f00;margin-bottom:.4rem;cursor:pointer}
+    .card p{font-size:.9rem;color:#555;margin-bottom:.65rem}
+    .price-row{display:flex;justify-content:space-between;align-items:center}
+    .price{font-weight:700}
+    .card .actions{display:flex;gap:.5rem;margin-top:.8rem}
+    .qty{display:flex;align-items:center;border-radius:12px;border:1px solid rgba(0,0,0,0.06);overflow:hidden}
+    .qty button{background:transparent;border:0;padding:.5rem .6rem;cursor:pointer}
+    .qty input{border:0;width:46px;text-align:center;padding:.35rem;font-weight:700}
+
+    /* ---------- CART DRAWER ---------- */
+    .drawer{position:fixed;right:0;top:0;height:100%;width:420px;max-width:94%;background:#fff;padding:1rem 1rem 2rem;box-shadow:-18px 0 40px rgba(0,0,0,0.12);transform:translateX(110%);transition:transform .35s ease-in-out;z-index:200;
+        /* Make footer sticky: */
+        display:flex; flex-direction:column;
+    }
+    .drawer.open{transform:translateX(0)}
+    .drawer h3{color:#ff6f00;margin-bottom:.6rem}
+    .cart-items{
+        flex: 1; /* Allows list to grow */
+        max-height: 60vh; /* Old logic, let's try flex-grow */
+        overflow:auto;
+        padding-right:.5rem
+    }
+    /* Updated: Make the cart items list scrollable, not the whole drawer */
+    #cart-items-container {
+        flex: 1 1 auto; /* This makes the item list grow and shrink, and be the *only* scrollable part */
+        overflow-y: auto;
+        padding-right: .5rem;
+    }
+    .cart-item{display:flex;gap:.6rem;align-items:center;padding:.6rem 0;border-bottom:1px dashed rgba(0,0,0,0.06)}
+    .cart-item img{width:64px;height:64px;object-fit:cover;border-radius:10px}
+    .cart-item .meta{flex:1}
+    .cart-item .meta h4{font-size:.95rem;margin-bottom:.25rem}
+    .cart-item .meta p{font-size:.85rem;color:#555}
+    .cart-footer{
+        flex-shrink: 0; /* Prevents footer from shrinking */
+        background:linear-gradient(180deg, rgba(255,255,255,0), #fff);
+        padding-top:.6rem
+    }
+    .summary{display:flex;flex-direction:column;gap:.4rem;margin-top:.8rem}
+    .summary .row{display:flex;justify-content:space-between}
+    .checkout-form{display:flex;flex-direction:column;gap:.6rem;margin-top:.8rem}
+    .checkout-form input, .checkout-form select{padding:.6rem;border-radius:10px;border:1px solid rgba(0,0,0,0.06)}
+
+    /* coupon */
+    .coupon{display:flex;gap:.5rem}
+    .coupon input{flex:1}
+
+    /* confirmation */
+    .confirm{padding:1rem;border-radius:12px;background:linear-gradient(90deg,#eaf8f3,#fefbe8);border:1px solid rgba(0,0,0,0.03)}
+    
+    /* ---------- CART OVERLAY ---------- */
+    .overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);opacity:0;visibility:hidden;transition:opacity .35s ease, visibility .35s ease;z-index:150}
+    .overlay.open{opacity:1;visibility:visible}
+
+    /* ---------- MODAL (for Login & Product) ---------- */
+    .scrim{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:250;opacity:0;visibility:hidden;transition:all .3s ease}
+    .scrim.open{opacity:1;visibility:visible}
+    
+    .modal{position:fixed;top:50%;left:50%;background:#fff;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,0.15);z-index:300;width:90%;transform:translate(-50%, -50%) scale(0.9);opacity:0;visibility:hidden;transition:all .3s ease}
+    .modal.open{transform:translate(-50%, -50%) scale(1);opacity:1;visibility:visible}
+    .modal-header{padding:1rem 1.5rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee}
+    .modal-header h3{color:#ff6f00}
+    .modal-header .close-btn{font-size:1.5rem;background:none;border:0;cursor:pointer;color:#888;padding:0 .25rem}
+    .modal-body{padding:1.5rem}
+
+    /* Auth Modal */
+    #auth-modal{max-width:460px}
+    .auth-tabs{display:flex;gap:.5rem;margin-bottom:1rem}
+    .auth-tab{flex:1;padding:.6rem;text-align:center;background:#f1f1f1;border:0;border-radius:8px;cursor:pointer}
+    .auth-tab.active{background:#ff6f00;color:#fff;font-weight:700}
+    .auth-form{display:none}
+    .auth-form.active{display:block}
+    .form-group{margin-bottom:.8rem}
+    .form-group label{display:block;margin-bottom:.3rem;font-size:.9rem;color:#555}
+    .form-group input{width:100%;padding:.65rem .8rem;border:1px solid #ddd;border-radius:8px;font-size:.95rem}
+    .form-group .btn{width:100%;margin-top:.4rem}
+    .auth-switch{text-align:center;margin-top:1rem;font-size:.9rem}
+    .auth-switch a{color:#ff6f00;font-weight:600;cursor:pointer}
+
+    /* Product Modal */
+    #product-modal{max-width:800px}
+    .product-detail-layout{display:flex;gap:1.5rem}
+    .product-detail-gallery{flex:1.2}
+    .product-detail-gallery .main-img{width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;border-radius:12px;margin-bottom:.5rem}
+    .product-detail-gallery .thumbnails{display:flex;gap:.5rem}
+    .product-detail-gallery .thumb{width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #eee;opacity:0.7;transition: all .2s;}
+    .product-detail-gallery .thumb:hover{opacity:1}
+    .product-detail-gallery .thumb.active{border-color:#ff6f00;opacity:1}
+    .product-detail-info{flex:1}
+    .product-detail-info .price{font-size:1.4rem;font-weight:700;color:#222;margin: .2rem 0}
+    .product-detail-info .desc{font-size:.95rem;color:#555;margin-bottom:1rem}
+    .product-offer{background:linear-gradient(90deg,#eaf8f3,#fefbe8);border:1px solid #e0e0e0;border-radius:10px;padding:.8rem;font-size:.9rem;margin:1rem 0}
+    .product-offer strong{color:#28a745}
+    
+    /* ---------- TOAST NOTIFICATIONS (NEW) ---------- */
+    #toast-container{position:fixed;top:1rem;right:1rem;z-index:999;display:flex;flex-direction:column;gap:.5rem}
+    .toast{padding: .8rem 1.2rem;border-radius:8px;background:#333;color:#fff;font-size:.9rem;box-shadow:0 4px 12px rgba(0,0,0,0.1);animation:slideIn .3s ease both;opacity:0}
+    .toast.success{background:linear-gradient(135deg, #28a745, #208a38);color:#fff}
+    .toast.error{background:linear-gradient(135deg, #dc3545, #b02a37);color:#fff}
+    .toast.show{opacity:1}
+    .toast.hide{animation:fadeOut .3s ease forwards}
+    @keyframes slideIn{from{opacity:0;transform:translateX(100%)}to{opacity:1;transform:translateX(0)}}
+    @keyframes fadeOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(100%)}}
+
+    /* ---------- FOOTER ---------- */
+    footer{margin-top:2rem;padding:2rem 0;text-align:center;background:linear-gradient(180deg,#fff, rgba(255,111,0,0.02));color:#444}
+
+    /* ---------- RESPONSIVE ---------- */
+    @media (max-width:980px){.grid{grid-template-columns:repeat(2,1fr)}.hero-inner{flex-direction:column;text-align:center}.searchbar{min-width:180px}}
+    @media (max-width:768px){.product-detail-layout{flex-direction:column}}
+    @media (max-width:600px){.grid{grid-template-columns:1fr}.nav{padding:.6rem 0}.brand h1{font-size:1rem}.searchbar{display:none}}
+
+    /* * ---------- ANIMATIONS ---------- */
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    .brand { animation: fadeIn 0.5s ease-out 0.1s both; }
+    .searchbar { animation: fadeIn 0.5s ease-out 0.2s both; }
+    nav.links { animation: fadeIn 0.5s ease-out 0.3s both; }
+    .cart-btn { animation: fadeIn 0.5s ease-out 0.4s both; }
+    .hero-copy h2 { animation: fadeIn 0.6s ease-out 0.3s both; }
+    .hero-copy p { animation: fadeIn 0.6s ease-out 0.5s both; }
+    .hero-copy .hero-cta { animation: fadeIn 0.6s ease-out 0.7s both; }
+    .card.fade-in { animation: fadeIn .6s ease both; }
+    .animate-on-scroll {opacity: 0;transform: translateY(20px);transition: opacity 0.6s ease-out, transform 0.6s ease-out;}
+    .animate-on-scroll.visible {opacity: 1;transform: translateY(0);}
+    .check-icon {display: inline-flex;align-items: center;justify-content: center;width: 24px;height: 24px;border-radius: 999px;background: #28a745;color: #fff;margin-right: .5rem;transform: scale(0);animation: popIn 0.3s ease-out 0.1s forwards;}
+    .check-icon svg {width: 14px;height: 14px;}
+    .check-icon path {stroke: #fff;stroke-width: 2.5;stroke-dasharray: 30;stroke-dashoffset: 30;animation: drawCheck 0.4s ease-out 0.4s forwards;}
+    @keyframes popIn {from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; }}
+    @keyframes drawCheck {from { stroke-dashoffset: 30; } to { stroke-dashoffset: 0; }}
+  </style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<header>
+  <div class="container nav">
+    <div class="brand">
+      <div class="logo">TB</div>
+      <div>
+        <h1>TastyBite</h1>
+        <small style="color:#777">Fresh • Fast • Tasty</small>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:1rem;align-items:center">
+      <div class="searchbar">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 21l-4.35-4.35" stroke="#bbb" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="11" cy="11" r="6" stroke="#bbb" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <input id="search" placeholder="Search dishes, pizza, burger..." />
+      </div>
+
+      <nav class="links">
+        <a href="#menu" class="nav-link">Menu</a>
+        <a href="#about" class="nav-link">About</a>
+        <a href="#contact" class="nav-link">Contact</a>
+      </nav>
+
+      <div id="auth-container">
+        <button class="btn ghost" id="login-btn" onclick="openAuthModal()">Login</button>
+      </div>
+      
+      <button class="cart-btn" id="open-cart">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 6h15l-1.5 9h-12z" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="20" r="1" fill="#fff"/><circle cx="18" cy="20" r="1" fill="#fff"/></svg>
+        <span>Cart</span>
+        <span class="cart-count" id="cart-count">0</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="container hero-inner">
+      <div class="hero-copy">
+        <h2>Delicious food. Delivered fast.</h2>
+        <p>Explore our menu, add favourites to the cart, and checkout quickly. Try coupon <strong>TASTY10</strong> for 10% off!</p>
+        <div class="hero-cta">
+          <button class="btn" onclick="document.getElementById('menu').scrollIntoView({behavior:'smooth'})">Explore Menu</button>
+          <button class="btn ghost" onclick="openCart()">View Cart</button>
+        </div>
+      </div>
+      <div style="flex:1"></div>
+    </div>
+  </section>
+
+  <section class="container" style="padding-top:1rem">
+    <div class="toolbar">
+      <div class="filters">
+        <select id="category" class="select">
+          <option value="all">All Categories</option>
+          <option value="burgers">Burgers</option>
+          <option value="pizza">Pizza</option>
+          <option value="pasta">Pasta</option>
+          <option value="drinks">Drinks</option>
+          <option value="dessert">Dessert</option>
+        </select>
+
+        <select id="sort" class="select">
+          <option value="popular">Sort: Popular</option>
+          <option value="price-asc">Price: Low → High</option>
+          <option value="price-desc">Price: High → Low</option>
+        </select>
+      </div>
+
+      <div style="display:flex;gap:.6rem;align-items:center">
+        <button class="btn ghost" onclick="loadSampleProducts()">Reset</button>
+      </div>
+    </div>
+
+    <section id="menu">
+      <h2 style="color:#ff6f00;margin-bottom:1rem">Our Special Menu</h2>
+      <div id="product-grid" class="grid"></div>
+    </section>
+  </section>
+
+  <aside id="cart-drawer" class="drawer" aria-hidden="true">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+      <h3>Your Order</h3>
+      <div style="display:flex;gap:.5rem;align-items:center">
+        <button class="btn ghost" onclick="clearCart()">Clear</button>
+        <button class="btn" id="close-cart">Close</button>
+      </div>
+    </div>
+
+    <div id="cart-items-container">
+        <div id="cart-items" class="cart-items"></div>
+    </div>
+
+    <div class="cart-footer">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.6rem">
+        <div style="flex:1;margin-right:.6rem">
+          <div class="coupon">
+            <input id="coupon-input" placeholder="Coupon code" />
+            <button class="btn" onclick="applyCoupon()">Apply</button>
+          </div>
+        </div>
+      </div>
+      <div class="summary">
+        <div class="row"><span>Subtotal</span><strong id="subtotal">₹0.00</strong></div>
+        <div class="row"><span>Delivery</span><span id="delivery">₹0.00</span></div>
+        <div class="row"><span>Tax</span><span id="tax">₹0.00</span></div>
+        <div class="row" style="font-size:1.05rem"><span>Total</span><strong id="total">₹0.00</strong></div>
+      </div>
+      <div style="margin-top:.7rem">
+        <button class="btn" id="checkout-btn" onclick="showCheckout()">Checkout</button>
+      </div>
+      <div id="checkout-area" style="display:none;margin-top:.8rem">
+        <h4 style="margin-bottom:.4rem">Delivery details</h4>
+        <form id="checkout-form" class="checkout-form" onsubmit="return handleOrder(event)">
+          <input id="name" required placeholder="Full name" />
+          <input id="phone" required placeholder="Phone (e.g. +91 99999 88888)" />
+          <input id="address" required placeholder="Delivery address" />
+          <select id="paymethod">
+            <option value="cod">Cash on delivery</option>
+            <option value="card">Card (mock)</option>
+          </select>
+          <button class="btn" type="submit">Place Order</button>
+        </form>
+      </div>
+      <div id="order-confirm" style="display:none;margin-top:.6rem"></div>
+    </div>
+  </aside>
+  <div id="overlay" class="overlay"></div>
+
+
+  <div id="modal-scrim" class="scrim"></div>
+
+  <div id="auth-modal" class="modal">
+    <div class="modal-header">
+      <h3>Welcome</h3>
+      <button class="close-btn" onclick="closeAuthModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="auth-tabs">
+        <button id="login-tab" class="auth-tab active" onclick="showAuthTab('login')">Login</button>
+        <button id="register-tab" class="auth-tab" onclick="showAuthTab('register')">Register</button>
+      </div>
+
+      <form id="login-form" class="auth-form active" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label for="login-email">Email</label>
+          <input id="login-email" type="email" required placeholder="you@example.com" />
+        </div>
+        <div class="form-group">
+          <label for="login-pass">Password</label>
+          <input id="login-pass" type="password" required placeholder="••••••••" />
+        </div>
+        <div class="form-group">
+          <button class="btn" type="submit">Login</button>
+        </div>
+        <div class="auth-switch">
+          <a onclick="showAuthTab('register')">Don't have an account? Register</a>
+        </div>
+      </form>
+
+      <form id="register-form" class="auth-form" onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label for="reg-name">Full Name</label>
+          <input id="reg-name" type="text" required placeholder="Your Name" />
+        </div>
+        <div class="form-group">
+          <label for="reg-email">Email</label>
+          <input id="reg-email" type="email" required placeholder="you@example.com" />
+        </div>
+        <div class="form-group">
+          <label for="reg-pass">Password</text>
+          <input id="reg-pass" type="password" required placeholder="Min 6 characters" />
+        </div>
+        <div class="form-group">
+          <button class="btn" type="submit">Create Account</button>
+        </div>
+        <div class="auth-switch">
+          <a onclick="showAuthTab('login')">Already have an account? Login</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="product-modal" class="modal">
+    <div class="modal-header">
+      <h3>Product Details</h3>
+      <button class="close-btn" onclick="closeProductModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="product-modal-body">
+      </div>
+  </div>
+
+
+  <section id="about" class="container animate-on-scroll" style="margin-top:2rem">
+    <h2 style="color:#ff6f00">About TastyBite</h2>
+    <p style="margin-top:.6rem;color:#555">Demo food store built with HTML, CSS and JavaScript. Features: product browsing, cart with localStorage persistence, coupon, taxes, delivery calc, checkout form and order confirmation animation.</p>
+  </section>
+
+  <section id="contact" class="container animate-on-scroll" style="margin-top:2rem">
+    <h2 style="color:#ff6f00">Contact</h2>
+    <p style="margin-top:.6rem;color:#555">Call us: +91 99999 88888 • Email: support@tastybite.example</p>
+  </section>
+</main>
+
+<footer>
+  <div class="container">
+    <small>© 2025 TastyBite — Demo store. Not for real orders.</small>
+  </div>
+</footer>
+
+<script>
+// ---------- SAMPLE PRODUCTS (with clean URLs for gallery simulation) ----------
+const SAMPLE_PRODUCTS = [
+  {id:'p1',title:'Cheesy Burger',category:'burgers',price:199,desc:'Double patty, melted cheese, lettuce & signature sauce. A true classic, packed with flavor in every bite.',img:'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=800&q=80',popular:95},
+  {id:'p2',title:'Veggie Pizza',category:'pizza',price:399,desc:'Thin crust with fresh vegetables, mozzarella, and a tangy tomato base. Healthy and delicious.',img:'https://images.unsplash.com/photo-1548365328-9f80b2f5121b?auto=format&fit=crop&w=800&q=80',popular:90},
+  {id:'p3',title:'Italian Pasta',category:'pasta',price:249,desc:'Creamy Alfredo pasta with herbs and a hint of garlic. Served with a side of toasted bread.',img:'https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=800&q=80',popular:80},
+  {id:'p4',title:'Chocolate Brownie',category:'dessert',price:129,desc:'Rich, fudgy chocolate brownie served warm, with an optional scoop of vanilla ice cream.',img:'https://images.unsplash.com/photo-1606755962773-0b9b10a930a6?auto=format&fit=crop&w=800&q=80',popular:75},
+  {id:'p5',title:'Classic Coke',category:'drinks',price:49,desc:'A chilled 300ml bottle of Classic Coca-Cola. The perfect refreshment.',img:'https://images.unsplash.com/photo-1589391886642-30f5bb2d1d80?auto=format&fit=crop&w=800&q=80',popular:70},
+  {id:'p6',title:'Grilled Cheese Sandwich',category:'burgers',price:169,desc:'Buttery grilled sandwich with a gooey, melted three-cheese blend. Comfort food at its best.',img:'https://images.unsplash.com/photo-1604908176976-9ae180f8c28b?auto=format&fit=crop&w=800&q=80',popular:65},
+  {id:'p7',title:'Margherita Pizza',category:'pizza',price:349,desc:'Classic margherita with fresh basil, vine-ripened tomatoes, and fresh mozzarella.',img:'https.images.unsplash.com/photo-1544117515-0c3f7a9b5b9a?auto=format&fit=crop&w=800&q=80',popular:85},
+  {id:'p8',title:'Garlic Bread',category:'dessert',price:99,desc:'Toasted garlic bread with herbs and butter. A perfect side for any pasta or pizza.',img:'https.images.unsplash.com/photo-1600891964599-f61ba0e24092?auto=format&fit=crop&w=800&q=80',popular:60}
+];
+
+// ---------- STATE & LOCAL STORAGE ----------
+let products = [];
+let cart = {}; // cart structure: {productId: {id, title, price, qty, img}}
+let coupon = null;
+let user = null; // User state
+const TAX_RATE = 0.05; // 5%
+
+// Modal DOM Elements
+const authModal = document.getElementById('auth-modal');
+const productModal = document.getElementById('product-modal');
+const modalScrim = document.getElementById('modal-scrim');
+
+// ---------- NEW: TOAST NOTIFICATION FUNCTION ----------
+function showToast(message, type = 'success') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  
+  container.appendChild(toast);
+  
+  // Show toast
+  setTimeout(() => toast.classList.add('show'), 100);
+  
+  // Hide toast
+  setTimeout(() => {
+    toast.classList.add('hide');
+    // Remove from DOM after animation
+    toast.addEventListener('animationend', () => toast.remove());
+  }, 3000);
+}
+
+
+function loadSampleProducts(){
+  products = SAMPLE_PRODUCTS.slice();
+  renderProducts();
+}
+
+// ---------- PRODUCT RENDER ----------
+function renderProducts(){
+  const grid = document.getElementById('product-grid');
+  grid.innerHTML = '';
+
+  const category = document.getElementById('category').value;
+  const sort = document.getElementById('sort').value;
+  const q = document.getElementById('search').value.trim().toLowerCase();
+
+  let filtered = products.filter(p => (category==='all' || p.category===category));
+  if(q){ filtered = filtered.filter(p => (p.title.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q))); }
+
+  if(sort==='price-asc') filtered.sort((a,b)=>a.price-b.price);
+  else if(sort==='price-desc') filtered.sort((a,b)=>b.price-a.price);
+  else filtered.sort((a,b)=>b.popular-a.popular);
+
+  filtered.forEach((p, index)=>{
+    const el = document.createElement('article'); 
+    el.className='card fade-in';
+    el.style.animationDelay = `${index * 60}ms`; 
+    
+    el.innerHTML = `
+      <img src="${p.img}" alt="${p.title}" onclick="openProductModal('${p.id}')">
+      <div class="card-body">
+        <h3 onclick="openProductModal('${p.id}')">${p.title}</h3>
+        <p>${p.desc.substring(0, 50)}...</p>
+        <div class="price-row">
+          <div class="price">₹${p.price.toFixed(2)}</div>
+          <div style="display:flex;align-items:center">
+            <div class="actions">
+              <div class="qty" data-id="${p.id}">
+                <button onclick="changeQty('${p.id}', -1)">-</button>
+                <input type="number" value="1" min="1" id="qty-${p.id}" />
+                <button onclick="changeQty('${p.id}', 1)">+</button>
+              </div>
+              <button class="btn" data-add-id="${p.id}" style="margin-left:.6rem" onclick="addToCartFromCard('${p.id}')">Add</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    grid.appendChild(el);
+  });
+}
+
+function changeQty(id, delta){
+  const inp = document.getElementById('qty-'+id);
+  if(!inp) return;
+  let v = parseInt(inp.value||1)+delta;
+  if(v<1) v=1;
+  inp.value = v;
+}
+
+function addToCartFromCard(id){
+  const qty = parseInt(document.getElementById('qty-'+id).value||1);
+  const prod = products.find(p=>p.id===id);
+  if (!prod) return;
+
+  addToCart(id, qty);
+  showToast(`${prod.title} added to cart!`); // Use toast
+
+  const btn = document.querySelector(`button[data-add-id="${id}"]`);
+  if(btn){
+    btn.textContent = 'Added!';
+    btn.classList.add('added');
+    setTimeout(() => {
+      btn.textContent = 'Add';
+      btn.classList.remove('added');
+    }, 1500);
+  }
+}
+
+// ---------- CART LOGIC ----------
+function saveCart(){
+  localStorage.setItem('tasty_cart_v1', JSON.stringify({cart,coupon}));
+}
+function loadCart(){
+  const raw = localStorage.getItem('tasty_cart_v1');
+  if(raw){
+    try{const parsed = JSON.parse(raw); cart = parsed.cart||{}; coupon = parsed.coupon||null;}catch(e){cart={};coupon=null}
+  }
+  updateCartUI();
+}
+
+function addToCart(id, qty=1){
+  const prod = products.find(p=>p.id===id);
+  if(!prod) return showToast('Product not found', 'error');
+  if(cart[id]) cart[id].qty += qty;
+  else cart[id] = {id:prod.id,title:prod.title,price:prod.price,qty:qty,img:prod.img};
+  saveCart();
+  updateCartUI(true); // Show flash
+}
+
+function removeFromCart(id){
+  delete cart[id]; saveCart(); updateCartUI();
+}
+
+function setQty(id, qty){
+  if(!cart[id]) return; cart[id].qty = qty; if(cart[id].qty<=0) delete cart[id]; saveCart(); updateCartUI();
+}
+
+function clearCart(){
+  if(!confirm('Clear all items from cart?')) return; 
+  cart={}; coupon=null; saveCart(); 
+  updateCartUI();
+  showToast('Cart cleared', 'success');
+}
+
+function updateCartUI(showFlash=false){
+  const countEl = document.getElementById('cart-count');
+  const itemsEl = document.getElementById('cart-items');
+  const subtotalEl = document.getElementById('subtotal');
+  const deliveryEl = document.getElementById('delivery');
+  const taxEl = document.getElementById('tax');
+  const totalEl = document.getElementById('total');
+  const cartFooter = document.querySelector('.cart-footer');
+
+  const ids = Object.keys(cart);
+  let count = 0; let subtotal = 0;
+  itemsEl.innerHTML = '';
+  
+  if(ids.length === 0){ 
+    itemsEl.innerHTML = '<p style="color:#777;padding:1rem">Your cart is empty. Add items from the menu.</p>';
+    cartFooter.style.display = 'none'; // Hide footer when empty
+  } else {
+    cartFooter.style.display = 'block'; // Show footer
+    ids.forEach(id=>{
+      const it = cart[id]; count += it.qty; subtotal += it.price * it.qty;
+      const row = document.createElement('div'); row.className='cart-item';
+      row.innerHTML = `
+        <img src="${it.img}" alt="${it.title}" />
+        <div class="meta">
+          <h4>${it.title}</h4>
+          <p>₹${it.price.toFixed(2)} × ${it.qty} = ₹${(it.price*it.qty).toFixed(2)}</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:.4rem;align-items:flex-end">
+          <div style="display:flex;gap:.2rem;align-items:center">
+            <button onclick="setQty('${id}', ${Math.max(1,it.qty-1)})">-</button>
+            <span style="min-width:28px;text-align:center">${it.qty}</span>
+            <button onclick="setQty('${id}', ${it.qty+1})">+</button>
+          </div>
+          <button style="background:transparent;border:0;color:#d33;cursor:pointer" onclick="removeFromCart('${id}')">Remove</button>
+        </div>
+      `;
+      itemsEl.appendChild(row);
+    });
+  }
+
+  // compute delivery and tax
+  const delivery = subtotal>0 ? (subtotal>499?0:49) : 0;
+  const tax = subtotal * TAX_RATE;
+  let total = subtotal + delivery + tax;
+
+  // coupon handling
+  if(coupon && coupon.code==='TASTY10'){
+    const discount = subtotal * 0.10;
+    total -= discount; // apply discount on subtotal
+  }
+
+  countEl.textContent = count;
+  subtotalEl.textContent = `₹${subtotal.toFixed(2)}`;
+  deliveryEl.textContent = `₹${delivery.toFixed(2)}`;
+  taxEl.textContent = `₹${tax.toFixed(2)}`;
+  totalEl.textContent = `₹${total.toFixed(2)}`;
+
+  if(showFlash){
+    const cartBtn = document.querySelector('.cart-btn');
+    cartBtn.animate([{transform:'scale(1)'},{transform:'scale(1.06)'},{transform:'scale(1)'}],{duration:320})
+  }
+}
+
+// ---------- DRAWER CONTROLS ----------
+const drawer = document.getElementById('cart-drawer');
+const overlay = document.getElementById('overlay');
+function openCart(){ 
+  drawer.classList.add('open'); 
+  drawer.setAttribute('aria-hidden','false'); 
+  overlay.classList.add('open');
+}
+function closeCart(){ 
+  drawer.classList.remove('open'); 
+  drawer.setAttribute('aria-hidden','true'); 
+  overlay.classList.remove('open');
+}
+document.getElementById('open-cart').addEventListener('click', openCart);
+document.getElementById('close-cart').addEventListener('click', closeCart);
+overlay.addEventListener('click', closeCart); 
+
+// ---------- COUPON ----------
+function applyCoupon(){
+  const code = document.getElementById('coupon-input').value.trim().toUpperCase();
+  if(!code) return showToast('Enter coupon code', 'error');
+  if(code==='TASTY10'){
+    coupon = {code:'TASTY10',desc:'10% off'};
+    showToast('Coupon applied: 10% off', 'success');
+  } else {
+    coupon = null; 
+    showToast('Invalid coupon', 'error');
+  }
+  saveCart(); updateCartUI();
+}
+
+// ---------- CHECKOUT ----------
+function showCheckout(){
+  // Only show if cart is not empty
+  if(Object.keys(cart).length === 0) {
+    return showToast('Your cart is empty!', 'error');
+  }
+  document.getElementById('checkout-area').style.display='block';
+  document.getElementById('checkout-btn').scrollIntoView({behavior:'smooth',block:'center'});
+}
+function handleOrder(e){
+  e.preventDefault();
+  const ids = Object.keys(cart);
+  if(ids.length===0) return showToast('Add items to cart first', 'error');
+  const name = document.getElementById('name').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const address = document.getElementById('address').value.trim();
+  if(!name||!phone||!address) return showToast('Fill delivery details', 'error');
+  
+  let subtotal = 0; Object.values(cart).forEach(it=>subtotal+=it.price*it.qty);
+  const delivery = subtotal>0 ? (subtotal>499?0:49) : 0;
+  let total = subtotal + delivery + (subtotal * TAX_RATE);
+  if(coupon && coupon.code==='TASTY10') total -= subtotal*0.10;
+  const orderId = 'TB' + Math.random().toString(36).slice(2,9).toUpperCase();
+  const when = new Date().toLocaleString();
+  const orderSummary = document.getElementById('order-confirm');
+  orderSummary.style.display='block';
+  orderSummary.innerHTML = `
+    <div class="confirm">
+      <h4 style="display:flex;align-items:center;">
+        <span class="check-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+        </span>
+        Order placed
+      </h4>
+      <p>Thanks <strong>${escapeHtml(name)}</strong> — your order <strong>${orderId}</strong> is confirmed.</p>
+      <p><small>Delivery to: ${escapeHtml(address)} • ${escapeHtml(phone)}</small></p>
+      <p><strong>Total paid: ₹${total.toFixed(2)}</strong></p>
+      <p style="margin-top:.4rem"><small>Placed on ${when}</small></p>
+    </div>
+  `;
+  cart = {}; coupon = null; saveCart(); updateCartUI();
+  showToast('Order placed successfully!', 'success');
+  orderSummary.scrollIntoView({behavior:'smooth', block:'center'});
+  return false;
+}
+
+// ******* AUTH FUNCTIONS *******
+function openAuthModal(tab = 'login') {
+  showAuthTab(tab);
+  authModal.classList.add('open');
+  modalScrim.classList.add('open');
+}
+function closeAuthModal() {
+  authModal.classList.remove('open');
+  modalScrim.classList.remove('open');
+}
+function showAuthTab(tabName) {
+  document.getElementById('login-tab').classList.toggle('active', tabName === 'login');
+  document.getElementById('register-tab').classList.toggle('active', tabName === 'register');
+  document.getElementById('login-form').classList.toggle('active', tabName === 'login');
+  document.getElementById('register-form').classList.toggle('active', tabName === 'register');
+}
+function handleRegister(e) {
+  e.preventDefault();
+  const name = document.getElementById('reg-name').value;
+  const email = document.getElementById('reg-email').value;
+  const pass = document.getElementById('reg-pass').value;
+  if(pass.length < 6) return showToast('Password must be at least 6 characters', 'error');
+  
+  let users = JSON.parse(localStorage.getItem('tasty_users') || '[]');
+  if(users.find(u => u.email === email)) return showToast('User with this email already exists', 'error');
+  
+  const newUser = { name, email, pass }; // In a real app, HASH the password
+  users.push(newUser);
+  localStorage.setItem('tasty_users', JSON.stringify(users));
+  
+  showToast('Registration successful! Please log in.', 'success');
+  showAuthTab('login');
+}
+function handleLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('login-email').value;
+  const pass = document.getElementById('login-pass').value;
+
+  let users = JSON.parse(localStorage.getItem('tasty_users') || '[]');
+  const foundUser = users.find(u => u.email === email && u.pass === pass);
+  
+  if(foundUser) {
+    user = { name: foundUser.name, email: foundUser.email };
+    localStorage.setItem('tasty_currentUser', JSON.stringify(user));
+    updateAuthUI();
+    closeAuthModal();
+    showToast(`Welcome back, ${user.name.split(' ')[0]}!`, 'success');
+  } else {
+    showToast('Invalid email or password', 'error');
+  }
+}
+function handleLogout() {
+  if(!confirm('Are you sure you want to log out?')) return;
+  const oldName = user.name.split(' ')[0];
+  user = null;
+  localStorage.removeItem('tasty_currentUser');
+  updateAuthUI();
+  showToast(`Goodbye, ${oldName}!`, 'success');
+}
+function updateAuthUI() {
+  const container = document.getElementById('auth-container');
+  if(user) {
+    container.innerHTML = `
+      <div style="display:flex; gap:.6rem; align-items:center;">
+        <span style="font-size:.9rem; color:#333">Hi, ${user.name.split(' ')[0]}</span>
+        <button class="btn ghost" onclick="handleLogout()">Logout</button>
+      </div>
+    `;
+  } else {
+    container.innerHTML = `<button class="btn ghost" id="login-btn" onclick="openAuthModal()">Login</button>`;
+  }
+}
+function loadUser() {
+  const rawUser = localStorage.getItem('tasty_currentUser');
+  if(rawUser) {
+    user = JSON.parse(rawUser);
+  }
+  updateAuthUI();
+}
+
+// ******* PRODUCT MODAL FUNCTIONS *******
+function openProductModal(id) {
+  const prod = products.find(p => p.id === id);
+  if(!prod) return;
+
+  // Simulate gallery images
+  const cleanImgUrl = prod.img.split('?')[0]; // Get base URL
+  const img1 = `${cleanImgUrl}?auto=format&fit=crop&w=800&q=80`;
+  const img2 = `${cleanImgUrl}?auto=format&fit=crop&w=800&q=80&grayscale`;
+  const img3 = `${cleanImgUrl}?auto=format&fit=crop&w=800&q=80&blur=2`;
+  
+  const body = document.getElementById('product-modal-body');
+  body.innerHTML = `
+    <div class="product-detail-layout">
+      <div class="product-detail-gallery">
+        <img src="${img1}" alt="${prod.title}" class="main-img" id="modal-main-img">
+        <div class="thumbnails">
+          <img src="${img1}" alt="Thumb 1" class="thumb active" data-src="${img1}" onclick="swapModalImage(this)">
+          <img src="${img2}" alt="Thumb 2" class="thumb" data-src="${img2}" onclick="swapModalImage(this)">
+          <img src="${img3}" alt="Thumb 3" class="thumb" data-src="${img3}" onclick="swapModalImage(this)">
+        </div>
+      </div>
+      <div class="product-detail-info">
+        <h3>${prod.title}</h3>
+        <div class="price">₹${prod.price.toFixed(2)}</div>
+        <p class="desc">${prod.desc}</p>
+        
+        <div class="product-offer">
+          <strong>Special Offer:</strong> Buy this item and get <strong>Free Delivery</strong> on your entire order! (Mock offer)
+        </div>
+        
+        <div class="actions" style="margin-top:1.2rem">
+          <div class="qty">
+            <button onclick="changeQtyInModal(-1)">-</button>
+            <input type="number" value="1" min="1" id="modal-qty" />
+            <button onclick="changeQtyInModal(1)">+</button>
+          </div>
+          <button class="btn" data-add-id="modal-${prod.id}" style="margin-left:.6rem" onclick="addToCartFromModal(this, '${prod.id}')">Add to Cart</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  productModal.classList.add('open');
+  modalScrim.classList.add('open');
+}
+
+// NEW: Handle modal gallery clicks
+function swapModalImage(thumbElement) {
+    document.getElementById('modal-main-img').src = thumbElement.dataset.src;
+    // Update active state
+    document.querySelectorAll('#product-modal .thumb').forEach(t => t.classList.remove('active'));
+    thumbElement.classList.add('active');
+}
+
+function closeProductModal() {
+  productModal.classList.remove('open');
+  modalScrim.classList.remove('open');
+}
+function changeQtyInModal(delta) {
+  const inp = document.getElementById('modal-qty');
+  let v = parseInt(inp.value) + delta;
+  if(v < 1) v = 1;
+  inp.value = v;
+}
+function addToCartFromModal(btn, id) {
+  const qty = parseInt(document.getElementById('modal-qty').value);
+  const prod = products.find(p=>p.id===id);
+  if (!prod) return;
+
+  addToCart(id, qty);
+  showToast(`${prod.title} added to cart!`, 'success');
+
+  // Animate button
+  if(btn){
+    btn.textContent = 'Added!';
+    btn.classList.add('added');
+    setTimeout(() => {
+      btn.textContent = 'Add to Cart';
+      btn.classList.remove('added');
+    }, 1500);
+  }
+}
+
+// ---------- UTILITIES ----------
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
+function debounce(fn, delay){ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), delay) }}
+
+// ---------- SEARCH & FILTER LISTENERS ----------
+document.getElementById('category').addEventListener('change', renderProducts);
+document.getElementById('sort').addEventListener('change', renderProducts);
+document.getElementById('search').addEventListener('input', debounce(()=>renderProducts(), 220));
+
+// ---------- SCROLL ANIMATION OBSERVER ----------
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1 }); 
+document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
+
+// ---------- INIT ----------
+loadSampleProducts();
+loadCart();
+loadUser(); // Load user from localStorage
+
+// Listen for clicks on shared modal scrim
+modalScrim.addEventListener('click', () => {
+  closeAuthModal();
+  closeProductModal();
+});
+
+</script>
+</body>
+</html>
